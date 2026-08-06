@@ -1,17 +1,36 @@
 import { useEffect, useState } from 'react';
-import { fetchAttemptsPerDay, fetchDau, fetchHardestLessons, type AttemptsPerDayRow, type DauRow, type HardestLessonRow } from '../../lib/adminAnalyticsApi';
+import {
+  fetchAttemptsPerDay,
+  fetchCourseFunnel,
+  fetchDau,
+  fetchHardestLessons,
+  type AttemptsPerDayRow,
+  type CourseFunnelRow,
+  type DauRow,
+  type HardestLessonRow,
+} from '../../lib/adminAnalyticsApi';
+import type { Course } from '../../lib/db-types';
+import { listCourses } from '../../lib/curriculumApi';
 
 export function AdminAnalyticsPage() {
   const [dau, setDau] = useState<DauRow[]>([]);
   const [attemptsPerDay, setAttemptsPerDay] = useState<AttemptsPerDayRow[]>([]);
   const [hardest, setHardest] = useState<HardestLessonRow[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [funnelCourseId, setFunnelCourseId] = useState('');
+  const [funnel, setFunnel] = useState<CourseFunnelRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchDau(), fetchAttemptsPerDay(), fetchHardestLessons()])
-      .then(([d, a, h]) => { setDau(d); setAttemptsPerDay(a); setHardest(h); })
+    Promise.all([fetchDau(), fetchAttemptsPerDay(), fetchHardestLessons(), listCourses()])
+      .then(([d, a, h, c]) => { setDau(d); setAttemptsPerDay(a); setHardest(h); setCourses(c); })
       .catch((e) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!funnelCourseId) { setFunnel([]); return; }
+    fetchCourseFunnel(funnelCourseId).then(setFunnel).catch((e) => setError(e.message));
+  }, [funnelCourseId]);
 
   if (error) return <p className="error">{error}</p>;
 
@@ -50,6 +69,22 @@ export function AdminAnalyticsPage() {
           {hardest.length === 0 && <tr><td colSpan={3}>Not enough attempt data yet.</td></tr>}
         </tbody>
       </table>
+
+      <h2>Course completion funnel</h2>
+      <select value={funnelCourseId} onChange={(e) => setFunnelCourseId(e.target.value)}>
+        <option value="">Choose a course…</option>
+        {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+      </select>
+      {funnel.length > 0 && (
+        <table className="admin-table">
+          <thead><tr><th>Lesson</th><th>Attempted</th><th>Completed</th></tr></thead>
+          <tbody>
+            {funnel.map((f) => (
+              <tr key={f.lesson_id}><td>{f.title}</td><td>{f.attempted}</td><td>{f.completed}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

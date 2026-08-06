@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import type { Course, Lesson, LessonProgress, Module } from '../../lib/db-types';
 import { getCourse, listLessons, listModules } from '../../lib/curriculumApi';
 import { flattenWithGating, type FlatLesson } from '../../lib/gating';
@@ -9,6 +10,7 @@ import { listLessonProgress } from '../../lib/practiceApi';
 export function CoursePage() {
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [flatLessons, setFlatLessons] = useState<FlatLesson[]>([]);
@@ -50,8 +52,9 @@ export function CoursePage() {
             {flatLessons.filter((fl) => fl.module.id === m.id).map(({ lesson, locked }) => (
               <li key={lesson.id} className={locked ? 'locked' : ''}>
                 {locked ? (
-                  <span className="lesson-locked" title="Complete the previous lesson to unlock">
-                    🔒 {lesson.title} <span className="lesson-type">{lesson.lesson_type}</span>
+                  <span className="lesson-locked" title={t('practice_locked')}>
+                    <span aria-hidden="true">🔒</span> {lesson.title} <span className="lesson-type">{lesson.lesson_type}</span>
+                    <span className="sr-only"> ({t('practice_locked')})</span>
                   </span>
                 ) : (
                   <Link to={`/practice/${lesson.id}`}>

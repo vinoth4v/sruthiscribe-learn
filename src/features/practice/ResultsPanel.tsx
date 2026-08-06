@@ -1,3 +1,4 @@
+import { useI18n } from '../../context/I18nContext';
 import type { PracticeScore } from '../../lib/scoring';
 
 export function ResultsPanel({
@@ -11,19 +12,20 @@ export function ResultsPanel({
   onRetry: () => void;
   onNext?: () => void;
 }) {
+  const { t } = useI18n();
   const passed = result.score >= passScore;
   return (
-    <div className="results-panel">
+    <div className="results-panel" role="status">
       <div className={`score-badge ${passed ? 'pass' : 'retry'}`}>{result.score}%</div>
-      <p>{passed ? 'Lesson complete — well sung.' : `Needs ${passScore}% to pass. Keep at it.`}</p>
+      <p>{passed ? t('results_pass') : `${t('results_retry')} (${passScore}%+)`}</p>
       {result.problemSvaras.length > 0 && (
         <p className="problem-svaras">
-          Focus on: {result.problemSvaras.join(', ')}
+          {t('results_focus')}: {result.problemSvaras.join(', ')}
         </p>
       )}
       <div className="results-actions">
-        <button onClick={onRetry}>Retry</button>
-        {passed && onNext && <button onClick={onNext}>Next lesson</button>}
+        <button onClick={onRetry}>{t('results_retry_btn')}</button>
+        {passed && onNext && <button onClick={onNext}>{t('results_next_btn')}</button>}
       </div>
     </div>
   );

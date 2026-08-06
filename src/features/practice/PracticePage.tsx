@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../context/I18nContext';
 import { RAGAMS } from '../../engine/engine';
 import type { Lesson, Kriti, Version } from '../../lib/db-types';
 import { kritiAttribution } from '../../lib/attribution';
 import { getLesson } from '../../lib/curriculumApi';
 import { getBestVersion, getKriti, getVersion } from '../../lib/kritiApi';
-import { recordAttempt } from '../../lib/practiceApi';
+import { recordAttemptOrQueue } from '../../lib/offlineQueue';
 import type { PracticeScore, ReferenceSvara } from '../../lib/scoring';
 import { ResultsPanel } from './ResultsPanel';
 import { SectionPractice, type ScoredSection } from './SectionPractice';
@@ -28,6 +29,7 @@ export function sahityaLine(section: { sahitya?: boolean; svaras: Array<{ syl?: 
 export function PracticePage() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const { user, profile } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [kriti, setKriti] = useState<Kriti | null>(null);
@@ -37,6 +39,7 @@ export function PracticePage() {
   const [sectionResults, setSectionResults] = useState<ScoredSection[]>([]);
   const [finalResult, setFinalResult] = useState<PracticeScore | null>(null);
   const [persistError, setPersistError] = useState<string | null>(null);
+  const [queuedOffline, setQueuedOffline] = useState(false);
 
   const tonicHz = profile?.sruthi_hz ?? DEFAULT_TONIC_HZ;
 
@@ -62,7 +65,7 @@ export function PracticePage() {
     if (!lesson || !user) return;
     setFinalResult(scored.result);
     try {
-      await recordAttempt({
+      const { queued } = await recordAttemptOrQueue({
         userId: user.id,
         lessonId: lesson.id,
         passScore: lesson.pass_score,
@@ -70,6 +73,7 @@ export function PracticePage() {
         detectedSruthiHz: scored.detectedSruthiHz,
         durationSec: scored.durationSec,
       });
+      setQueuedOffline(queued);
     } catch (e) {
       setPersistError(e instanceof Error ? e.message : 'Could not save this attempt.');
     }
@@ -99,7 +103,7 @@ export function PracticePage() {
     const avgSruthi = scores.reduce((a, s) => a + s.detectedSruthiHz, 0) / scores.length;
     setFinalResult(combined);
     try {
-      await recordAttempt({
+      const { queued } = await recordAttemptOrQueue({
         userId: user.id,
         lessonId: lesson.id,
         passScore: lesson.pass_score,
@@ -107,6 +111,7 @@ export function PracticePage() {
         detectedSruthiHz: avgSruthi,
         durationSec: totalDuration,
       });
+      setQueuedOffline(queued);
     } catch (e) {
       setPersistError(e instanceof Error ? e.message : 'Could not save this attempt.');
     }
@@ -116,6 +121,7 @@ export function PracticePage() {
     setFinalResult(null);
     setSectionResults([]);
     setSectionIndex(0);
+    setQueuedOffline(false);
   }
 
   if (loadError) return <p className="error">{loadError}</p>;
@@ -153,7 +159,7 @@ export function PracticePage() {
 
       {!finalResult && isKriti && sections.length > 0 && (
         <>
-          <p className="section-progress">Section {sectionIndex + 1} of {sections.length}</p>
+          <p className="section-progress">{t('practice_section')} {sectionIndex + 1} {t('practice_of')} {sections.length}</p>
           {sahityaLine(sections[sectionIndex]) && <p className="section-sahitya">{sahityaLine(sections[sectionIndex])}</p>}
           <SectionPractice
             key={sectionIndex}
@@ -166,9 +172,9 @@ export function PracticePage() {
           {sectionResults[sectionIndex] && (
             <div className="section-nav">
               {sectionIndex < sections.length - 1 ? (
-                <button onClick={() => setSectionIndex((i) => i + 1)}>Next section</button>
+                <button onClick={() => setSectionIndex((i) => i + 1)}>{t('practice_next_section')}</button>
               ) : (
-                <button onClick={finishKritiLesson}>Finish</button>
+                <button onClick={finishKritiLesson}>{t('practice_finish')}</button>
               )}
             </div>
           )}
@@ -176,6 +182,7 @@ export function PracticePage() {
       )}
 
       {persistError && <p className="error">{persistError}</p>}
+      {queuedOffline && <p className="offline-notice">You're offline — this attempt is saved on your device and will sync once you're back online.</p>}
 
       {finalResult && (
         <ResultsPanel

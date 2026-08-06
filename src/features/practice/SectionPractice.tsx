@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { analyzeSamples, DEFAULTS } from '../../engine/engine';
 import type { Ragam } from '../../engine/types';
+import { useI18n } from '../../context/I18nContext';
 import { SruthiDrone } from '../../lib/drone';
 import { defaultAnalyzeConfig } from '../../lib/engineConfig';
 import { scorePractice, type PracticeScore, type ReferenceSvara } from '../../lib/scoring';
@@ -30,6 +31,7 @@ export function SectionPractice({
   sectionLabel?: string;
   onScored: (scored: ScoredSection) => void;
 }) {
+  const { t } = useI18n();
   const [droneOn, setDroneOn] = useState(false);
   const [result, setResult] = useState<PracticeScore | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -77,23 +79,24 @@ export function SectionPractice({
       <NotationStrip reference={referenceSvaras} accuracy={result?.svaraAccuracy} />
 
       <div className="practice-controls">
-        <button onClick={toggleDrone}>{droneOn ? '■ Stop drone' : '▶ Play Sa drone'}</button>
+        <button onClick={toggleDrone} aria-pressed={droneOn}>{droneOn ? t('practice_stop_drone') : t('practice_play_drone')}</button>
         <button
           onClick={handleRecordToggle}
           disabled={analyzing || recorder.status === 'processing'}
           className={recorder.status === 'recording' ? 'recording' : ''}
+          aria-pressed={recorder.status === 'recording'}
         >
-          {recorder.status === 'recording' ? '■ Stop & score' : analyzing || recorder.status === 'processing' ? 'Analyzing…' : '● Record'}
+          {recorder.status === 'recording' ? t('practice_stop_score') : analyzing || recorder.status === 'processing' ? t('practice_analyzing') : t('practice_record')}
         </button>
       </div>
 
-      {recorder.error && <p className="error">{recorder.error}</p>}
-      {scoreError && <p className="error">{scoreError}</p>}
+      {recorder.error && <p className="error" role="alert">{recorder.error}</p>}
+      {scoreError && <p className="error" role="alert">{scoreError}</p>}
 
       {result && (
-        <div className={`section-score ${result.score >= 70 ? 'pass' : 'retry'}`}>
+        <div className={`section-score ${result.score >= 70 ? 'pass' : 'retry'}`} role="status">
           {result.score}%
-          {result.problemSvaras.length > 0 && <span className="problem-svaras"> · focus: {result.problemSvaras.join(', ')}</span>}
+          {result.problemSvaras.length > 0 && <span className="problem-svaras"> · {t('results_focus')}: {result.problemSvaras.join(', ')}</span>}
         </div>
       )}
     </div>
