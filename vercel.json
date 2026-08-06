@@ -1,0 +1,11 @@
+{
+  "name": "sruthiscribe-learn",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Permissions-Policy", "value": "microphone=(self)" }
+      ]
+    }
+  ]
+}

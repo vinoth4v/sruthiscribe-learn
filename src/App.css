@@ -1,0 +1,83 @@
+:root {
+  --ink: #1b1b1f;
+  --paper: #fdfaf5;
+  --accent: #b23b2e; /* kumkum */
+  --hit: #2e7d32;
+  --sub: #e08a00;
+  --miss: #c62828;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid #e5ddd0;
+}
+.nav-bar .brand { font-weight: 700; text-decoration: none; color: var(--ink); }
+.nav-links { display: flex; gap: 16px; align-items: center; }
+.nav-links a { color: var(--ink); text-decoration: none; }
+
+.app-main { max-width: 780px; margin: 0 auto; padding: 24px; }
+
+.course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.course-card {
+  display: block;
+  padding: 16px;
+  border: 1px solid #e5ddd0;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.level-badge { font-size: 12px; color: #666; }
+
+.lesson-list { list-style: none; padding: 0; }
+.lesson-list li { padding: 8px 0; border-bottom: 1px solid #eee; }
+.lesson-list a { color: var(--ink); text-decoration: none; }
+.lesson-type { font-size: 11px; color: #888; margin-left: 8px; }
+
+.notation-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; font-size: 22px; }
+.svara { padding: 4px 8px; border-radius: 6px; background: #f1ece0; }
+.svara-hit { background: color-mix(in srgb, var(--hit) 20%, transparent); color: var(--hit); }
+.svara-sub { background: color-mix(in srgb, var(--sub) 20%, transparent); color: var(--sub); }
+.svara-miss { background: color-mix(in srgb, var(--miss) 20%, transparent); color: var(--miss); }
+
+.practice-controls { display: flex; gap: 12px; margin: 16px 0; }
+.practice-controls button.recording { background: var(--miss); color: #fff; }
+
+.results-panel { margin-top: 24px; padding: 16px; border: 1px solid #e5ddd0; border-radius: 10px; }
+.score-badge { font-size: 32px; font-weight: 700; }
+.score-badge.pass { color: var(--hit); }
+.score-badge.retry { color: var(--sub); }
+.results-actions { display: flex; gap: 12px; margin-top: 12px; }
+
+.stat-row { display: flex; gap: 24px; margin: 20px 0; }
+.stat-tile { text-align: center; }
+.stat-value { display: block; font-size: 28px; font-weight: 700; }
+.stat-label { font-size: 12px; color: #666; }
+.continue-btn { display: inline-block; padding: 10px 16px; background: var(--accent); color: #fff; border-radius: 8px; text-decoration: none; }
+
+.admin-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.admin-table th, .admin-table td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+.admin-create-form { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+.admin-module { margin: 24px 0; padding: 12px; border: 1px solid #e5ddd0; border-radius: 8px; }
+.lesson-editor { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 0; border-top: 1px solid #eee; }
+.lesson-editor-actions { display: flex; gap: 6px; }
+.svara-input input { width: 260px; }
+
+.sign-in-page form { display: flex; flex-direction: column; gap: 12px; max-width: 320px; }
+.sign-in-page label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.link-btn { background: none; border: none; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0; margin-top: 8px; }
+.google-btn { margin-top: 8px; }
+
+.error { color: var(--miss); }
