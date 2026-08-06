@@ -23,8 +23,21 @@ static deploy to Vercel + GitHub Pages. Build plan: docs/sruthiscribe-learn-buil
   the CLI is linked to the project, or paste into the Supabase SQL editor)
 
 ## Current phase
-Phase 3 (Practice Loop MVP) complete at MVP scope. See
-docs/sruthiscribe-learn-build-plan.md §9 for phase definitions and
-verification steps. Phase 4 (dashboard) has a minimal version; Phases 5-6 are
-not started — see the handoff notes at the bottom of this session's summary
-for what's left.
+Phases 0-6 all have a working first pass (see
+docs/sruthiscribe-learn-build-plan.md §9 for the phase definitions). Notable
+gaps to know about before extending further:
+- Google OAuth is configured but not yet verified end-to-end (no
+  `google`-provider row confirmed in `auth.identities` as of last check).
+- Kriti lessons: many `kritis.ragam` values in the shared DB don't match any
+  of the ~90 engine-supported `RAGAMS` names (e.g. "Todi" vs "Hanumatodi",
+  diacritic variants). The admin picker warns and lets you override; that
+  data isn't going to get cleaner on its own.
+- i18n (English/Tamil) covers nav/dashboard/sign-in/practice loop, not the
+  admin console.
+- No component-level UI tests (no @testing-library/react) — coverage is
+  unit tests on pure logic (engine, scoring, gating, streak/date math, PDF
+  writer, offline queue). Manually exercise the record→score→persist flow
+  in a real browser before trusting it blindly.
+- The GitHub Actions `push` trigger has not fired on any of several pushes
+  to `main` (workflow_dispatch always works) — cause unconfirmed, may need
+  Settings → Actions → General in the GitHub web UI to diagnose.
