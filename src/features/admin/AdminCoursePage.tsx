@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { RAGAMS } from '../../engine/engine';
-import type { Course, Lesson, LessonType, Module } from '../../lib/db-types';
+import type { Course, Kriti, Lesson, LessonType, Module, Version } from '../../lib/db-types';
 import {
   createLesson,
   createModule,
@@ -13,6 +13,7 @@ import {
   updateCourse,
   updateLesson,
 } from '../../lib/curriculumApi';
+import { getKriti, listVersionsForKriti, searchKritisByTitle } from '../../lib/kritiApi';
 import { formatFlatSvaras, parseFlatSvaras } from '../../lib/svaraText';
 
 const LESSON_TYPES: LessonType[] = ['exercise', 'geetham', 'varnam', 'kriti', 'theory'];
@@ -111,6 +112,32 @@ function LessonEditor({ lesson, onChange }: { lesson: Lesson; onChange: () => vo
   const [svaraText, setSvaraText] = useState(formatFlatSvaras(lesson.reference_svaras ?? []));
   const [saving, setSaving] = useState(false);
 
+  const [kritiQuery, setKritiQuery] = useState('');
+  const [kritiResults, setKritiResults] = useState<Kriti[]>([]);
+  const [selectedKriti, setSelectedKriti] = useState<Kriti | null>(null);
+  const [versions, setVersions] = useState<Version[]>([]);
+  const [versionId, setVersionId] = useState<string | null>(lesson.version_id);
+
+  useEffect(() => {
+    if (lesson.kriti_id) getKriti(lesson.kriti_id).then(setSelectedKriti).catch(() => {});
+  }, [lesson.kriti_id]);
+
+  useEffect(() => {
+    if (selectedKriti) listVersionsForKriti(selectedKriti.id).then(setVersions).catch(() => {});
+  }, [selectedKriti]);
+
+  async function runKritiSearch() {
+    setKritiResults(await searchKritisByTitle(kritiQuery));
+  }
+
+  function pickKriti(k: Kriti) {
+    setSelectedKriti(k);
+    setRagam(k.ragam);
+    setKritiResults([]);
+    setKritiQuery('');
+    setVersionId(null);
+  }
+
   async function save() {
     setSaving(true);
     try {
@@ -119,7 +146,9 @@ function LessonEditor({ lesson, onChange }: { lesson: Lesson; onChange: () => vo
         lesson_type: lessonType,
         ragam,
         pass_score: passScore,
-        reference_svaras: parseFlatSvaras(svaraText),
+        reference_svaras: lessonType === 'kriti' ? null : parseFlatSvaras(svaraText),
+        kriti_id: lessonType === 'kriti' ? (selectedKriti?.id ?? null) : null,
+        version_id: lessonType === 'kriti' ? versionId : null,
       });
       onChange();
     } finally {
@@ -145,16 +174,60 @@ function LessonEditor({ lesson, onChange }: { lesson: Lesson; onChange: () => vo
         {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>
       <select value={ragam} onChange={(e) => setRagam(e.target.value)}>
+        {!RAGAMS.some((r) => r.name === ragam) && <option value={ragam}>{ragam} (unsupported — pick one below)</option>}
         {RAGAMS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
       </select>
       <label>
         Pass score
         <input type="number" min={0} max={100} value={passScore} onChange={(e) => setPassScore(Number(e.target.value))} style={{ width: 60 }} />
       </label>
-      <label className="svara-input">
-        Reference svaras (e.g. "S R2 G3 P D2 S'")
-        <input value={svaraText} onChange={(e) => setSvaraText(e.target.value)} />
-      </label>
+
+      {lessonType === 'kriti' ? (
+        <div className="kriti-picker">
+          {selectedKriti ? (
+            <span className="kriti-picked">
+              {selectedKriti.title}{selectedKriti.composer ? ` — ${selectedKriti.composer}` : ''}
+              <button onClick={() => { setSelectedKriti(null); setVersions([]); setVersionId(null); }}>change</button>
+            </span>
+          ) : (
+            <span className="kriti-search">
+              <input placeholder="Search kriti title/composer…" value={kritiQuery} onChange={(e) => setKritiQuery(e.target.value)} />
+              <button onClick={runKritiSearch}>Search</button>
+              {kritiResults.length > 0 && (
+                <ul className="kriti-results">
+                  {kritiResults.map((k) => {
+                    const engineSupported = RAGAMS.some((r) => r.name === k.ragam);
+                    return (
+                      <li key={k.id}>
+                        <button onClick={() => pickKriti(k)}>
+                          {k.title}{k.composer ? ` — ${k.composer}` : ''} ({k.ragam})
+                          {!engineSupported && <span className="ragam-unsupported"> ⚠ ragam not in engine — set it manually below</span>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </span>
+          )}
+          {selectedKriti && versions.length > 0 && (
+            <select value={versionId ?? ''} onChange={(e) => setVersionId(e.target.value || null)}>
+              <option value="">Best available version (auto)</option>
+              {versions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.status} · {v.contributor} · {v.sections} section{v.sections === 1 ? '' : 's'} · {new Date(v.created_at).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      ) : (
+        <label className="svara-input">
+          Reference svaras (e.g. "S R2 G3 P D2 S'")
+          <input value={svaraText} onChange={(e) => setSvaraText(e.target.value)} />
+        </label>
+      )}
+
       <div className="lesson-editor-actions">
         <button onClick={save} disabled={saving}>Save</button>
         <button onClick={togglePublish}>{lesson.is_published ? 'Unpublish' : 'Publish'}</button>

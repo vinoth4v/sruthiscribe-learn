@@ -74,7 +74,7 @@ export interface VersionSection {
   name: string;
   cycles?: number;
   aksharas?: number;
-  sahitya?: string;
+  sahitya?: boolean; // true if svaras[].syl carries lyric syllables for this section
   octaves?: string;
   svaras: VersionSvara[];
 }

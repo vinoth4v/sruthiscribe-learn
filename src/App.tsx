@@ -5,6 +5,8 @@ import { CoursesPage } from './features/curriculum/CoursesPage';
 import { PracticePage } from './features/practice/PracticePage';
 import { AdminPage } from './features/admin/AdminPage';
 import { AdminCoursePage } from './features/admin/AdminCoursePage';
+import { AdminReviewPage } from './features/admin/AdminReviewPage';
+import { AdminAnalyticsPage } from './features/admin/AdminAnalyticsPage';
 import { DashboardPage } from './routes/DashboardPage';
 import { SignInPage } from './routes/SignInPage';
 import { RequireAdmin, RequireAuth } from './routes/ProtectedRoute';
@@ -17,7 +19,13 @@ function NavBar() {
       <Link to="/" className="brand">SruthiScribe Learn</Link>
       <div className="nav-links">
         <Link to="/learn">Learn</Link>
-        {profile?.role === 'admin' && <Link to="/admin">Admin</Link>}
+        {profile?.role === 'admin' && (
+          <>
+            <Link to="/admin">Admin</Link>
+            <Link to="/admin/review">Review</Link>
+            <Link to="/admin/analytics">Analytics</Link>
+          </>
+        )}
         {user ? (
           <button onClick={signOut}>Sign out</button>
         ) : (
@@ -41,6 +49,8 @@ function App() {
           <Route path="/practice/:lessonId" element={<RequireAuth><PracticePage /></RequireAuth>} />
           <Route path="/admin" element={<RequireAdmin><AdminPage /></RequireAdmin>} />
           <Route path="/admin/courses/:courseId" element={<RequireAdmin><AdminCoursePage /></RequireAdmin>} />
+          <Route path="/admin/review" element={<RequireAdmin><AdminReviewPage /></RequireAdmin>} />
+          <Route path="/admin/analytics" element={<RequireAdmin><AdminAnalyticsPage /></RequireAdmin>} />
         </Routes>
       </main>
     </AuthProvider>

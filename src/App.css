@@ -104,6 +104,35 @@ body {
 
 .unlock-all-toggle { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; }
 
+/* Phase 5: kriti lessons, section practice, review queue */
+.kriti-heading { font-weight: 600; margin: 4px 0 0; }
+.attribution { font-size: 12px; color: #888; margin: 2px 0 16px; }
+.section-progress { font-size: 13px; color: #888; }
+.section-label { margin: 16px 0 4px; }
+.section-sahitya { font-style: italic; color: #666; margin: 4px 0 12px; }
+.section-nav { margin: 12px 0; }
+.section-score { margin-top: 12px; font-size: 20px; font-weight: 700; }
+.section-score.pass { color: var(--hit); }
+.section-score.retry { color: var(--sub); }
+.problem-svaras { font-size: 13px; font-weight: 400; color: #888; }
+
+.kriti-picker { display: flex; flex-direction: column; gap: 6px; }
+.kriti-search { display: flex; gap: 6px; position: relative; }
+.kriti-results { position: absolute; top: 100%; left: 0; z-index: 10; background: var(--paper); border: 1px solid var(--card-border); border-radius: 6px; list-style: none; margin: 4px 0 0; padding: 4px; max-height: 220px; overflow-y: auto; min-width: 320px; }
+.kriti-results li button { display: block; width: 100%; text-align: left; padding: 4px 6px; }
+.ragam-unsupported { color: var(--sub); font-size: 11px; }
+.kriti-picked { display: flex; align-items: center; gap: 8px; }
+
+.review-list { list-style: none; padding: 0; }
+.review-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--card-border); }
+.review-meta { font-size: 12px; color: #888; }
+.use-in-lesson-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Phase 6: analytics bar charts */
+.bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 80px; margin: 8px 0 20px; }
+.bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.bar { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; }
+
 .admin-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
 .admin-table th, .admin-table td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
 .admin-create-form { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
