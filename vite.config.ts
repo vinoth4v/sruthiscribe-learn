@@ -31,8 +31,8 @@ export default defineConfig({
         name: 'SruthiScribe Learn',
         short_name: 'SS Learn',
         description: 'Carnatic music learning app — practice svaras with real-time feedback.',
-        theme_color: '#b23b2e',
-        background_color: '#fdfaf5',
+        theme_color: '#a63325',
+        background_color: '#faf6ee',
         display: 'standalone',
         start_url: '/',
         icons: [
