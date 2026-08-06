@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { StreakCalendar } from '../components/StreakCalendar';
 import { useAuth } from '../context/AuthContext';
-import { listPracticeDays } from '../lib/practiceApi';
+import { addUtcDays, utcDateKey } from '../lib/dateUtc';
+import { listPracticeDays, type PracticeDayRow } from '../lib/practiceApi';
+import { myRagamAccuracy, type RagamAccuracy } from '../lib/studentProgress';
 
-function currentStreak(days: Array<{ day: string }>): number {
+export function currentStreak(days: Array<{ day: string }>, today = new Date()): number {
   const set = new Set(days.map((d) => d.day));
   let streak = 0;
-  const cursor = new Date();
-  for (;;) {
-    const key = cursor.toISOString().slice(0, 10);
-    if (!set.has(key)) break;
+  let cursor = utcDateKey(today);
+  while (set.has(cursor)) {
     streak++;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = addUtcDays(cursor, -1);
   }
   return streak;
 }
@@ -20,13 +21,17 @@ export function DashboardPage() {
   const { user, profile } = useAuth();
   const [minutes, setMinutes] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [days, setDays] = useState<PracticeDayRow[]>([]);
+  const [ragamAccuracy, setRagamAccuracy] = useState<RagamAccuracy[]>([]);
 
   useEffect(() => {
     if (!user) return;
-    listPracticeDays(user.id).then((days) => {
-      setMinutes(Math.round(days.reduce((a, d) => a + d.seconds_practiced, 0) / 60));
-      setStreak(currentStreak(days));
+    listPracticeDays(user.id).then((rows) => {
+      setDays(rows);
+      setMinutes(Math.round(rows.reduce((a, d) => a + d.seconds_practiced, 0) / 60));
+      setStreak(currentStreak(rows));
     });
+    myRagamAccuracy(user.id).then(setRagamAccuracy);
   }, [user]);
 
   return (
@@ -42,6 +47,27 @@ export function DashboardPage() {
           <span className="stat-label">minutes practiced</span>
         </div>
       </div>
+
+      <h2>Practice activity</h2>
+      <StreakCalendar practiceDays={days} />
+
+      {ragamAccuracy.length > 0 && (
+        <>
+          <h2>Accuracy by ragam</h2>
+          <ul className="ragam-accuracy-list">
+            {ragamAccuracy.map((r) => (
+              <li key={r.ragam}>
+                <span className="ragam-name">{r.ragam}</span>
+                <div className="ragam-bar-track">
+                  <div className="ragam-bar-fill" style={{ width: `${r.avgScore}%` }} />
+                </div>
+                <span className="ragam-score">{r.avgScore}%</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       <Link to="/learn" className="continue-btn">Continue learning</Link>
     </div>
   );

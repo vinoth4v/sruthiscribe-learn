@@ -85,7 +85,12 @@ export async function listLessonProgress(userId: string): Promise<LessonProgress
   return data as LessonProgress[];
 }
 
-export async function listPracticeDays(userId: string): Promise<Array<{ day: string; seconds_practiced: number }>> {
+export interface PracticeDayRow {
+  day: string;
+  seconds_practiced: number;
+}
+
+export async function listPracticeDays(userId: string): Promise<PracticeDayRow[]> {
   const { data, error } = await supabase
     .from('practice_days')
     .select('day, seconds_practiced')

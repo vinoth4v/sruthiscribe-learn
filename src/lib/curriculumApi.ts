@@ -7,6 +7,12 @@ export async function listCourses(): Promise<Course[]> {
   return data as Course[];
 }
 
+export async function getCourse(id: string): Promise<Course> {
+  const { data, error } = await supabase.from('courses').select('*').eq('id', id).single();
+  if (error) throw error;
+  return data as Course;
+}
+
 export async function listModules(courseId: string): Promise<Module[]> {
   const { data, error } = await supabase.from('modules').select('*').eq('course_id', courseId).order('sort_order');
   if (error) throw error;

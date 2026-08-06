@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { RAGAMS } from '../../engine/engine';
-import type { Lesson, LessonType, Module } from '../../lib/db-types';
+import type { Course, Lesson, LessonType, Module } from '../../lib/db-types';
 import {
   createLesson,
   createModule,
   deleteLesson,
   deleteModule,
+  getCourse,
   listLessons,
   listModules,
+  updateCourse,
   updateLesson,
 } from '../../lib/curriculumApi';
 import { formatFlatSvaras, parseFlatSvaras } from '../../lib/svaraText';
@@ -17,6 +19,7 @@ const LESSON_TYPES: LessonType[] = ['exercise', 'geetham', 'varnam', 'kriti', 't
 
 export function AdminCoursePage() {
   const { courseId } = useParams<{ courseId: string }>();
+  const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
   const [newModuleTitle, setNewModuleTitle] = useState('');
@@ -25,6 +28,7 @@ export function AdminCoursePage() {
   const refresh = useCallback(async () => {
     if (!courseId) return;
     try {
+      setCourse(await getCourse(courseId));
       const mods = await listModules(courseId);
       setModules(mods);
       const entries = await Promise.all(mods.map(async (m) => [m.id, await listLessons(m.id)] as const));
@@ -35,6 +39,12 @@ export function AdminCoursePage() {
   }, [courseId]);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  async function toggleUnlockAll() {
+    if (!course) return;
+    await updateCourse(course.id, { unlock_all: !course.unlock_all });
+    refresh();
+  }
 
   async function addModule() {
     if (!newModuleTitle.trim() || !courseId) return;
@@ -65,8 +75,15 @@ export function AdminCoursePage() {
 
   return (
     <div className="admin-course-page">
-      <h1>Manage curriculum</h1>
+      <h1>Manage curriculum{course ? `: ${course.title}` : ''}</h1>
       {error && <p className="error">{error}</p>}
+
+      {course && (
+        <label className="unlock-all-toggle">
+          <input type="checkbox" checked={course.unlock_all} onChange={toggleUnlockAll} />
+          Unlock all lessons (bypass pass-score gating for this course)
+        </label>
+      )}
 
       <div className="admin-create-form">
         <input placeholder="New module title" value={newModuleTitle} onChange={(e) => setNewModuleTitle(e.target.value)} />

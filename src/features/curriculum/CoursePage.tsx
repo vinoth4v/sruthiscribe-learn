@@ -1,32 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
-import type { Course, Lesson, Module } from '../../lib/db-types';
-import { listLessons, listModules } from '../../lib/curriculumApi';
+import { useAuth } from '../../context/AuthContext';
+import type { Course, Lesson, LessonProgress, Module } from '../../lib/db-types';
+import { getCourse, listLessons, listModules } from '../../lib/curriculumApi';
+import { flattenWithGating, type FlatLesson } from '../../lib/gating';
+import { listLessonProgress } from '../../lib/practiceApi';
 
 export function CoursePage() {
   const { courseId } = useParams<{ courseId: string }>();
+  const { user } = useAuth();
   const [course, setCourse] = useState<Course | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
-  const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
+  const [flatLessons, setFlatLessons] = useState<FlatLesson[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !user) return;
     (async () => {
       try {
-        const { data: courseRow, error: courseErr } = await supabase.from('courses').select('*').eq('id', courseId).single();
-        if (courseErr) throw courseErr;
-        setCourse(courseRow as Course);
+        const c = await getCourse(courseId);
+        setCourse(c);
+
         const mods = await listModules(courseId);
         setModules(mods);
         const entries = await Promise.all(mods.map(async (m) => [m.id, await listLessons(m.id)] as const));
-        setLessonsByModule(Object.fromEntries(entries));
+        const lessonsByModule: Record<string, Lesson[]> = Object.fromEntries(entries);
+
+        const progressRows = await listLessonProgress(user.id);
+        const progress: Record<string, LessonProgress> = Object.fromEntries(progressRows.map((p) => [p.lesson_id, p]));
+
+        setFlatLessons(flattenWithGating(mods, lessonsByModule, progress, c));
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Could not load course.');
       }
     })();
-  }, [courseId]);
+  }, [courseId, user]);
 
   if (error) return <p className="error">{error}</p>;
   if (!course) return <p>Loading…</p>;
@@ -39,11 +47,17 @@ export function CoursePage() {
         <section key={m.id} className="module-section">
           <h2>{m.title}</h2>
           <ul className="lesson-list">
-            {(lessonsByModule[m.id] ?? []).map((l) => (
-              <li key={l.id}>
-                <Link to={`/practice/${l.id}`}>
-                  {l.title} <span className="lesson-type">{l.lesson_type}</span>
-                </Link>
+            {flatLessons.filter((fl) => fl.module.id === m.id).map(({ lesson, locked }) => (
+              <li key={lesson.id} className={locked ? 'locked' : ''}>
+                {locked ? (
+                  <span className="lesson-locked" title="Complete the previous lesson to unlock">
+                    🔒 {lesson.title} <span className="lesson-type">{lesson.lesson_type}</span>
+                  </span>
+                ) : (
+                  <Link to={`/practice/${lesson.id}`}>
+                    {lesson.title} <span className="lesson-type">{lesson.lesson_type}</span>
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
